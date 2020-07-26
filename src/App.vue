@@ -9,12 +9,20 @@
 </template>
 
 <script>
+//Polyfilling escape method, to escape regexp special characters
+if (!RegExp.escape) {
+  RegExp.escape = function(s) {
+    return String(s).replace(/[\\^$*+?.()|[\]{}]/g, "\\$&");
+  };
+}
 import FileReader from "./components/FileReader";
 import SearchWord from "./components/SearchWord";
 import Vue from "vue";
 import { MdCard, MdToolbar } from "vue-material/dist/components";
 
-Vue.use(MdCard, MdToolbar);
+Vue.use(MdCard);
+Vue.use(MdToolbar);
+
 export default {
   name: "App",
   data: () => ({

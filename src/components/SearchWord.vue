@@ -2,6 +2,12 @@
   <div>
     <md-card>
       <md-card-header>
+        <md-switch v-on:change="filterChanged()" v-model="caseSensitive">
+          Case Sensitive
+        </md-switch>
+        <md-switch v-on:change="filterChanged()" v-model="wholeWord">
+          Whole Word
+        </md-switch>
         <div style="display:flex">
           <md-field>
             <label>Search</label>
@@ -10,26 +16,32 @@
               >Type here to search text in File!</span
             >
           </md-field>
-          <div v-if="query" class="search-count">Count: {{ count }}</div>
+          <md-content v-if="query" class="md-primary search-count"
+            >Count: {{ count }}</md-content
+          >
         </div>
       </md-card-header>
 
-      <md-card-content>
-        <span
-          v-for="(textObj, idx) in highlightText"
-          :key="idx"
-          v-bind:class="textObj.highlight && 'highlightText'"
-        >
-          {{ textObj.val }}
-        </span>
+      <md-card-content style="font-size: 16px;">
+        <!-- eslint-disable-next-line prettier/prettier -->
+        <pre><span v-for="(textObj, idx) in highlightText" :key="idx" v-bind:class="textObj.highlight && 'highlightText'">{{textObj.val}}</span></pre>
       </md-card-content>
     </md-card>
   </div>
 </template>
 <script>
 import Vue from "vue";
-import { MdField, MdContent, MdCard } from "vue-material/dist/components";
-Vue.use(MdContent, MdCard, MdField);
+import {
+  MdField,
+  MdContent,
+  MdCard,
+  MdSwitch
+} from "vue-material/dist/components";
+Vue.use(MdContent);
+Vue.use(MdCard);
+Vue.use(MdField);
+Vue.use(MdSwitch);
+
 export default {
   name: "SearchWord",
   props: {
@@ -38,6 +50,8 @@ export default {
   data() {
     return {
       query: "",
+      wholeWord: true,
+      caseSensitive: true,
       count: 0,
       highlightText: []
     };
@@ -62,22 +76,22 @@ export default {
         }
       ];
     },
+    filterChanged() {
+      if (this.query) {
+        this.queryUpdated();
+      }
+    },
     queryUpdated() {
       if (!this.query) {
         return this.reset();
       }
       this.highlightText = [];
-      let indices = [];
-      let index = 0;
-      while (index >= 0) {
-        index = this.content.indexOf(this.query, index);
-        if (index >= 0) {
-          let start = index;
-          let end = index + this.query.length;
-          index = end;
-          indices.push({ start, end });
-        }
-      }
+      let indices = getMatchIndices(
+        this.query,
+        this.content,
+        this.caseSensitive,
+        this.wholeWord
+      );
       let lastIdx = 0;
       indices.forEach(({ start, end }) => {
         let val = this.content.substring(lastIdx, start);
@@ -104,17 +118,42 @@ export default {
     }
   }
 };
+
+function getMatchIndices(query, str, caseSensitive = false, wholeWord = false) {
+  let match,
+    queryLen = query.length,
+    indices = [],
+    flag = "ig";
+
+  if (caseSensitive) {
+    flag = "g";
+  }
+  query = RegExp.escape(query);
+
+  if (wholeWord) {
+    query = `\\b${query}\\b`;
+  }
+  query = new RegExp(query, flag);
+
+  while ((match = query.exec(str))) {
+    let start = match.index;
+    let end = start + queryLen;
+    indices.push({ start, end });
+  }
+  return indices;
+}
 </script>
 
 <style>
 .highlightText {
-  background-color: #fff2ac;
-  background-image: linear-gradient(to right, #ffe359 0%, #fff2ac 100%);
-  font-size: 16px;
+  background-color: #ff5252;
+  color: #fff;
 }
 .search-count {
   min-width: 100px;
   display: flex;
+  align-items: center;
+  height: 40px;
   justify-content: center;
   margin: 20px 16px 0 16px;
 }
