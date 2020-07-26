@@ -4,7 +4,7 @@
       <h3 class="md-title">File Search</h3>
     </md-toolbar>
     <FileReader v-on:load="fileContent = $event"></FileReader>
-    <SearchWord v-bind:content="fileContent"></SearchWord>
+    <SearchWord v-if="fileContent" v-bind:content="fileContent"></SearchWord>
   </div>
 </template>
 
@@ -26,7 +26,7 @@ Vue.use(MdToolbar);
 export default {
   name: "App",
   data: () => ({
-    fileContent: "dsdsdsdsdsdsd"
+    fileContent: ""
   }),
   components: {
     FileReader,
